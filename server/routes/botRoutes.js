@@ -18,7 +18,8 @@ router.get('/', async (req, res) => {
 router.post('/deploy', async (req, res) => {
   try {
     const { token, status } = req.body;
-    const bot = await deployBot(token, status);
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const bot = await deployBot(token, status, ip);
     res.json({ success: true, botId: bot._id });
   } catch (error) {
     res.status(500).json({ error: error.message });

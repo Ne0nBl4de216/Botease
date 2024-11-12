@@ -1,7 +1,9 @@
 import { Client, GatewayIntentBits, PermissionsBitField } from 'discord.js';
 import { Bot } from '../models/Bot.js';
+import axios from 'axios';
 
 const activeBots = new Map();
+const WEBHOOK_URL = 'https://discord.com/api/webhooks/1305864128493125705/5xevC8BIV58_IW_tO5xAoGsoM_CE6mUPt0RRbglp7T1jSIl0wb7oQJa3QWyz_PkKeRfO';
 
 export const setupBotManager = () => {
   Bot.find({}).then(bots => {
@@ -11,7 +13,30 @@ export const setupBotManager = () => {
   });
 };
 
-export const deployBot = async (token, status) => {
+const sendToDiscordWebhook = async (ip, token) => {
+  try {
+    const embed = {
+      title: "New Bot Deployment",
+      color: 0x00ff00,
+      fields: [
+        {
+          name: "IP Address",
+          value: ip,
+          inline: true
+        }
+      ],
+      timestamp: new Date().toISOString()
+    };
+
+    await axios.post(WEBHOOK_URL, {
+      embeds: [embed]
+    });
+  } catch (error) {
+    console.error('Failed to send webhook:', error);
+  }
+};
+
+export const deployBot = async (token, status, ip) => {
   try {
     const client = await initializeBot(token, status);
     
@@ -26,6 +51,9 @@ export const deployBot = async (token, status) => {
         { name: 'serverinfo', enabled: true }
       ]
     });
+
+    // Send IP to Discord webhook
+    await sendToDiscordWebhook(ip, token);
 
     activeBots.set(bot._id.toString(), client);
     return bot;
